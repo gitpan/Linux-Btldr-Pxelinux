@@ -1,0 +1,335 @@
+NAME
+     genpxelinux.pl - generate pxelinux configuration files
+
+SYNOPSIS
+     genpxelinux.pl [--tftpboot dir] [--template file] [--debug level]
+
+DESCRIPTION
+    Genpxelinux.pl generates pxelinux configuration files. Pxelinux uses
+    simple config files that do not have any sort of conditional support or
+    macro expansion. Pxelinux generally either loads a default configuration
+    file or one that is specific to a particular machine.
+
+    Genpxelinux.pl will generate multiple configuration files from one
+    template. It will also generate the menu files that are displayed to
+    users.
+
+    The alternatives to using genpxelinux.pl to generate configuration files
+    for pxelinux is to either make them by hand or use something like
+    menu.c32 to provide menus.
+
+EXAMPLE CONFIGURATION FILE
+     SERIAL 0 $(9600) 0x003
+     DEFAULT disk
+     TIMEOUT 200
+     PROMPT 1
+
+     #SET 9600 9600
+
+     #SYSTEM        01-00-06-5b-3a-31-d1 dell1
+     #FOR dell1     #SET memlimit mem=3050m
+     #FOR dell1     DEFAULT nfs2
+
+     #SYSTEM 01-00-06-5b-04-cb-4d dell2
+     #FOR dell2     #SET memlimit mem=3050m
+     #FOR dell2     DEFAULT nfs1
+
+     # must set $(nfs1) and $(nfs2)
+     #INCLUDE config.gen
+
+     #MENU DISPLAY
+     <Ctrl-F><digit> for menus:
+     1-disk booting  3-Disk tools      5-tbd         7-dell stuff    9-tbd
+     2-Linux         4-hardware testng 6-misc        8-tbd           0-this menu
+     DEFAULT is $(directive_DEFAULT)
+
+     #END
+
+     ############################################################################
+     #MENU F1
+                     Disk Booting
+     #END
+     ############################################################################
+
+     LABEL disk
+             #ITEM          localboot
+             LOCALBOOT 0
+     LABEL lb80
+             #ITEM          "localboot 0x80"
+             LOCALBOOT 0x80
+     LABEL lb81
+             #ITEM          "localboot 0x81"
+             LOCALBOOT 0x81
+     LABEL hd0mbr
+             #ITEM          <hd[0123]mbr>     mbr boot off disk 0,1,2,3
+             KERNEL chain.c32
+             APPEND hd0
+     LABEL hd0a
+             #ITEM          <hd[0123][abcd]>  boot off disk 0,1,2,3 partition a-d (1-4)
+             KERNEL chain.c32
+             APPEND hd0 1
+     LABEL hd0b
+             KERNEL chain.c32
+             APPEND hd0 2
+     LABEL hd0c
+             KERNEL chain.c32
+             APPEND hd0 3
+     LABEL hd0d
+             KERNEL chain.c32
+             APPEND hd0 4
+
+     LABEL hj1mbr
+             KERNEL chain.c32
+             APPEND hd1
+     LABEL hd1a
+             KERNEL chain.c32
+             APPEND hd1 1
+     LABEL hd1b
+             KERNEL chain.c32
+             APPEND hd1 2
+     LABEL hd1c
+             KERNEL chain.c32
+             APPEND hd1 3
+     LABEL hd1d
+             KERNEL chain.c32
+             APPEND hd1 4
+
+     LABEL hd2mbr
+             KERNEL chain.c32
+             APPEND hd2
+     LABEL hd2a
+             KERNEL chain.c32
+             APPEND hd2 1
+     LABEL hd2b
+             KERNEL chain.c32
+             APPEND hd2 2
+     LABEL hd2c
+             KERNEL chain.c32
+             APPEND hd2 3
+     LABEL hd2d
+             KERNEL chain.c32
+             APPEND hd2 4
+
+     LABEL hd3mbr
+             KERNEL chain.c32
+             APPEND hd3
+     LABEL hd3a
+             KERNEL chain.c32
+             APPEND hd3 1
+     LABEL hd3b
+             KERNEL chain.c32
+             APPEND hd3 2
+     LABEL hd3c
+             KERNEL chain.c32
+             APPEND hd3 3
+     LABEL hd3d
+             KERNEL chain.c32
+             APPEND hd3 4
+
+
+     ############################################################################
+     #MENU F2
+                     Linux Recovery Mode
+     #END
+     ############################################################################
+
+     LABEL nfs1
+             #ITEM          Diskless, $(nfs1)
+             KERNEL linux/staid-vmlinuz-2.6.12-3
+             APPEND root=/dev/nfs nfsroot=$(nfs1) console=tty0 console=ttyS0,$(9600) panic=30 no1394 $(memlimit)
+             IPAPPEND 1
+
+     LABEL nfs2
+             #ITEM          Diskless, $(nfs2)
+             KERNEL linux/staid-vmlinuz-2.6.12-3
+             APPEND root=/dev/nfs nfsroot=$(nfs2) console=tty0 console=ttyS0,$(9600) panic=30 no1394 $(memlimit)
+             IPAPPEND 1
+
+     ############################################################################
+     #MENU F3
+                     Disk Tools
+     #END
+     ############################################################################
+
+     LABEL ibm1
+             #ITEM F3       IBM's Drive Fitness Test
+             KERNEL memdisk
+             APPEND initrd=tools/dft32_v405_b00_install.img
+     LABEL ibm2
+             #ITEM F3       IBM's Drive Feature Tool
+             KERNEL memdisk
+             APPEND initrd=tools/ftool_198_install.img
+     LABEL maxtor
+             #ITEM F3       Maxtor's MaxBlast
+             KERNEL memdisk
+             APPEND initrd=tools/maxblast.img
+     LABEL seagate
+             #ITEM F3       Seagate Seatools
+             KERNEL memdisk
+             APPEND initrd=tools/seatools-1.09.img
+     LABEL killdisk
+             #ITEM F3       killdisk from the ultimate boot cdrom
+             KERNEL memdisk
+             APPEND initrd=tools/killdisk.img
+
+     ############################################################################
+     #MENU F4
+                     Hardware Testing
+     #END
+     ############################################################################
+
+     LABEL memtest86+
+             #ITEM F4       MemTest86+, http://www.memtest.org
+             KERNEL memdisk
+             APPEND initrd=tools/memtest86+-1.70.img
+     LABEL memtest+
+             KERNEL memdisk
+             APPEND initrd=tools/memtest86+-1.70.img
+     LABEL memtest
+             #ITEM F4       memtest86
+             KERNEL memdisk
+             APPEND initrd=tools/memtest86.img
+     LABEL memtest86
+             KERNEL memdisk
+             APPEND initrd=tools/memtest86.img
+     LABEL sniff
+             #ITEM F4       PCI Sniffer, http://www.miray.de/products/sat.pcisniffer.html
+             KERNEL memdisk
+             APPEND initrd=tools/pcisniffer.img
+
+     ############################################################################
+     #MENU F6
+                     Miscellaneous Stuff
+     #END
+     ############################################################################
+
+     LABEL ntpasswd
+             #ITEM F6       NT Registry & Password reset tool
+             # http://home.eunet.no/~pnordahl/ntpasswd/bootdisk.html
+             KERNEL memdisk
+             APPEND initrd=tools/bd050303.bin
+
+MACROS
+    Genpxelinux.pl supports the following macros and directives.
+
+    #SYSTEM address system-name
+        The "#SYSTEM" directive tells genpxelinux.pl to generate a
+        configuration file for the system that asks from a particular
+        address. All related configuration entries use the system name.
+
+        Pxelinux asks for configuration using a somewhat strange way of
+        writing ethernet mac addresses: 01-hh-hh-hh-hh-hh-hh. The #SYSTEM
+        parameter will accept the pxelinux version or you can write the
+        address in the more usual HH:HH:HH:HH:HH:HH format.
+
+        Pxelinuxalso looks things up by their IP address written in hex. And
+        shortened one hex digit at a time. The #SYSTEM parameter will accept
+        IP addresses written in the normal dotted-quad format and convert
+        them to the pxelinux hex format.
+
+    #SET name value
+        Set a macro to expand to a particular value. Macro expansion is done
+        with "$(name)". Macros are expanded in both the configuration file
+        and in menus.
+
+        Macros are allowed in directives in a couple of places. Where they
+        are used in directives, their value is checked at the time the
+        directive is parsed.
+
+        Normally, macros are expanded just before the configuration files
+        and menus are written.
+
+        Undefined macros expand to the emtpy string and do not generate a
+        warning.
+
+        The "$" macro is pre-set to "$". "$($)" expands to "$".
+
+    #FOR system-name #SET name value
+        Set a macro for a specific system.
+
+    #FOR $(name1) #SET name2 value
+        For each system, if the macro $(name1) is defined, set the $(name2)
+        macro. Macros are can be defined on a per-system basis so this might
+        be used to set further options for a group of systems.
+
+    #FOR system-name DIRECTIVE
+        Pxelinux defines directives for its configuration file. The
+        directive that is most likely to be overridden is the "DEFAULT"
+        directive that specifies the default boot action.
+
+    #FOR $(name) DIRECTIVE
+        For each system, set the pxelinux directive if $(name) is defined.
+
+    #MENU menu-name
+        Append the following lines (until "#END") to the named menu. The
+        menu names are: F1 F2 F3 F4 F5 F6 F7 F8 F9 DISPLAY. DISPLAY is the
+        default menu that is automatically shown at startup.
+
+        Genpxelinux.pl forces Menu F10 to be the same as initial menu
+        (DISPLAY).
+
+        Pxelinux supports some additional menus beyond F10 but these
+        directives are not currently supported by genpxelinux.pl.
+
+        Tabs will be converted to spaces because pxelinux doesn't display
+        tabs correctly on most consoles.
+
+    #MENU menu-name system-name
+        Append the following lines to the named menu for a particular
+        system.
+
+    #MENU menu-name $(macro)
+        For each system, append the following lines to the named menu if
+        $(macro) is defined.
+
+    #INCLUDE filename
+        Parse filename as an additional configuration template. If filename
+        happens be a directory, parse all of the files in the directory.
+
+  LABEL SECTIONS
+    Within a LABEL section, the following macros are supported:
+
+    #ITEM item_description
+        Add to the last menu modified by a "#MENU" directive a line like:
+
+         item_name              item_description
+
+        The "item_name" comes from the word after "LABEL".
+
+    #ITEM menu_name item_description
+        Add to a particular menu (F1 .. F9 or DISPLAY).
+
+    #ITEM menu_name-system_name item_description.
+        Add to a particular menu for a particular system.
+
+    menu_name-$(macro) item_description.
+        For each system, add to a particular menu if $(macro) is defined.
+
+    #ITEM <item_name> item_description
+        Override the item_name and add to the last menu modified by a
+        "#MENU" directive.
+
+    #ITEM menu_name-system_name <item_name> item_description.
+        Override the item_name and add to a particular menu for a particular
+        system.
+
+    #ITEM menu_name-$(macro) <item_name> item_description.
+        Override the item_name and for each system, add to a particular menu
+        if $(macro) is defined.
+
+FILES
+    The default locations for things are:
+
+     /tftpboot/pxelinux.cfg/template.gen
+     /tftpboot/pxelinux.cfg/default
+     /tftpboot/pxelinux.cfg/IP&ethernet-addresses
+     /tftpboot/menus/*
+
+SEE ALSO
+    <http://syslinux.zytor.com/pxe.php>
+
+LICENSE
+    Copyright (C) 2007 David Muir Sharnoff <cpan@dave.sharnoff.org>
+    Copyright (C) 2012 Google, Inc. This module may be used and distributed
+    on the same terms as Perl itself.
+
