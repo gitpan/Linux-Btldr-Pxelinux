@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Linux-Btldr-Pxelinux
-version:            0.22
+version:            0.23
 abstract:           generate configuration files for pxelinux
 author:
     - David Muir Sharnoff <cpan@dave.sharnoff.org>

@@ -2,7 +2,7 @@
 
 package Linux::Bootloader::genpxelinux;
 
-our $VERSION = 0.22;
+our $VERSION = 0.23;
 
 my $tftpboot = "/tftpboot";
 my $cfg = "pxelinux.cfg";
@@ -439,6 +439,7 @@ Usage: $0 [--tftpboot dir] [--template file] [--debug level]
 END
 }
 
+no warnings;
 'completed';
 
 __END__
